@@ -26,6 +26,7 @@ public class Overseer : MonoBehaviour
         instance = this;
     }
     #endregion
+
     [SerializeField]
     public Grid grid;
     PlayerControls controls;
@@ -442,14 +443,6 @@ public class Overseer : MonoBehaviour
                 Debug.Log("OVERSEER: Update: navigatemenus: cancel:");
                 Menu.instance.resetArc(getCurCharTurn(), playerUIs[0]);
             }    
-            /*if (controls.NavigateMenus.SwapHeroL.triggered)
-            {
-                StartCoroutine(swapHero(true));
-            }
-            if (controls.NavigateMenus.SwapHeroR.triggered)
-            {
-                StartCoroutine(swapHero(false));
-            }*/
         }
         #endregion
 
@@ -464,7 +457,6 @@ public class Overseer : MonoBehaviour
                 if (curArcSelection == arcSelection.Cards)
                     getCurCharTurn().discard();
 
-                //vvvvvvvvvvvvvvvvvvcheck if win/lose conditions are met.vvvvvvvvvvvvvvvvvvvvvvv
                 cueDeadCharacters();
                 int battleCondition = checkWinLossCondition();
                 if (battleCondition != 0)
@@ -474,12 +466,10 @@ public class Overseer : MonoBehaviour
                     if (battleCondition == 1)
                     {
                         StartCoroutine(curBattleScript.endBattle(false));//win
-                        //StartCoroutine(endCombat());
                     }
                     else
                     {
                         StartCoroutine(curBattleScript.endBattle(true));//lose
-                        //StartCoroutine(GameOver());
                     }
                     return;
                 }
@@ -487,9 +477,6 @@ public class Overseer : MonoBehaviour
                 //all animations have finished, Complete the current action and return to menu
                 Debug.Log("OVERSEER: Update: finishing current action");
                 getCurCharTurn().useAP(curAPCost, curArcSelection);
-
-                //FieldHighlight.instance.resetHighlighting();
-                //SwapHeroIndicator.SetActive(true);
                 
                 updateAllUIs();
                 clearAllActions();
@@ -526,16 +513,13 @@ public class Overseer : MonoBehaviour
                     if (battleCondition == 1)
                     {
                         StartCoroutine(curBattleScript.endBattle(false));//win
-                        //StartCoroutine(endCombat());
                     }
                     else
                     {
                         StartCoroutine(curBattleScript.endBattle(true));//lose
-                        //StartCoroutine(GameOver());
                     }
                     return;
                 }
-                //vvvvvvvvvvvvvvv check if win/lose conditions are met for player. vvvvvvvvvvvvvv
 
                 //all animations have finished, check if Enemy is done with its turn
                 if (getCurCharTurn().GetComponent<enemyBrain>().getIsTurnComplete())
@@ -545,23 +529,10 @@ public class Overseer : MonoBehaviour
 
                     StartCoroutine(startNextTurn());
                     return;
-
-                    /*
-                    //cur enemy turn complete, go to next enemy or end enemy phase if all enemies have gone.
-                    curCharTurnItr++;
-
-                    if (curCharTurnItr >= enemies.Count)
-                    {
-                        //all enemies have gone, change phase.
-                        endEnemyPhase();
-                        StartCoroutine(beginHeroPhase());
-                        return;
-                    }*/
                 }
 
                 cameraFollowScript.instance.updateTarget(getCurCharTurn().gameObject);
                 FieldHighlight.instance.updateCurCharacter(getCurCharTurn().gameObject.GetComponent<Character>());
-                //enemies[curCharTurnItr].gameObject.GetComponent<enemyBrain>().startCurEnemyTurn();
                 StartCoroutine(getCurCharTurn().gameObject.GetComponent<enemyBrain>().enemyTakeAction());
             }
         }
@@ -576,7 +547,6 @@ public class Overseer : MonoBehaviour
 
         //Change the world mode and thereby restrict player controls while battle is starting
         WorldMode.instance.changeWorldMode(wMode.WAIT);
-        //yield return new WaitForSeconds(0.1f);
 
         //add enemies to overseer
         enemies = battleInfo.enemies;
@@ -588,11 +558,8 @@ public class Overseer : MonoBehaviour
         StartCoroutine(updateCameraTarget(cursorControls.instance.gameObject));
 
         //change player facing direction and move to the tile wave start Pos
-        //playerCharacters[0].facingDir = playerCharacters[0].GetComponent<FreeroamMovement>().facingDir;
         playerCharacters[0].changeFacingDirection(battleInfo.waveStartPos);
         StartCoroutine(playerCharacters[0].freeMoveTo(battleInfo.waveStartPos, grid.WorldToCell(playerCharacters[0].transform.position)));
-        //StartCoroutine(playerCharacters[0].freeMoveTo(battleInfo.waveStartPos,
-          //                                              grid.WorldToCell(playerCharacters[0].transform.position)));
         yield return new WaitForEndOfFrame();
         yield return new WaitWhile(playerCharacters[0].getIsActionInProcess);
 
@@ -623,15 +590,16 @@ public class Overseer : MonoBehaviour
             playerCharacters[i].transform.position = playerCharacters[0].transform.position;
             playerCharacters[i].changeFacingDirection(battleInfo.waveStartPos);
         }
+
         //Move all characters to their starting positions
         Debug.Log("OVERSEER: beginCombat: Moving characters to starting positions.");
         int itr = 0;
         foreach (Character player in playerCharacters)
         {
-            //Debug.Log("OVERSEER: Player " + itr + " Start Pos: " + playerStartPositions[itr]);
             StartCoroutine(player.freeMoveTo(playerStartPositions[itr], grid.WorldToCell(player.transform.position)));
             itr++;
         }
+
         itr = 0;
         foreach(GameObject enemy in enemies)
         {
@@ -639,6 +607,7 @@ public class Overseer : MonoBehaviour
                     grid.WorldToCell(enemy.transform.position)));
             itr++;
         }
+
         Debug.Log("OVERSEER: beginCombat: All players at starting positions.");
         //all characters finish moving to start positions
         yield return new WaitWhile(isOngoingActions);
@@ -652,11 +621,6 @@ public class Overseer : MonoBehaviour
         if (environmentalCollision != null)
             environmentalCollision.gameObject.SetActive(false);
 
-        //instantiate barriers (stumps) around the play area
-        Debug.Log("OVERSEER: beginCombat: begin instantiating stump barriers");
-        //StartCoroutine(battleInfo.GetComponent<BattleScript>().instantiateBarriers());
-        Debug.Log("OVERSEER: beginCombat: Finished instantiating stump barriers.");
-
         //Start battle banners
         BannerAnimScript.instance.turnOnBanner(0);//begin battle
 
@@ -665,12 +629,6 @@ public class Overseer : MonoBehaviour
         if (playerCharacters.Count > 3)
             Debug.LogError("OVERSEER: beginCombat: Player count > 3");
 
-        /*foreach (Character character in playerCharacters)
-        {
-            showUI(itr); //turns on UI game objects
-            character.setCharUI(playerUIs[itr]);
-            itr++;
-        }*/
         createFieldUIs();
         
         //animates UI moving on screen
@@ -685,27 +643,6 @@ public class Overseer : MonoBehaviour
             character.resetDeck();
 
         StartCoroutine(startNextTurn());
-
-        /*
-        //draw cards to player/enemy hands
-        foreach (Character character in playerCharacters)
-        {
-            character.beginTurn(true);
-        }
-        foreach (GameObject enemy in enemies)
-        {
-            enemy.gameObject.GetComponent<Character>().beginTurn(true);
-        }
-
-        yield return new WaitWhile(isOngoingActions);
-
-        
-        Debug.Log("OVERSEER: beginCombat: resetting Menu onto current turn's character.");
-        EventSystem.current.SetSelectedGameObject(null);
-        //SwapHeroIndicator.SetActive(true);
-        WorldMode.instance.changeWorldMode(wMode.NAVIGATEMENUS);
-        Menu.instance.resetArc(playerCharacters[0], playerUIs[0]);
-        */
     }
 
     public void getTurnOrder()
@@ -755,8 +692,6 @@ public class Overseer : MonoBehaviour
         Menu.instance.closeArc();
         hideFieldUI();
 
-        Debug.Log("New turn : 1");
-
         if (turnOrder.Count == 0)
         {
             getTurnOrder();
@@ -767,11 +702,8 @@ public class Overseer : MonoBehaviour
 
         StartCoroutine(updateCameraTarget(curChar.gameObject));
         FieldHighlight.instance.updateCurCharacter(curChar);
-        //anim.Play("hideUI");//hide center UI
-        Debug.Log("New turn : 2");
         yield return new WaitForEndOfFrame();
         yield return new WaitWhile(isOngoingActions);
-        Debug.Log("New turn : 3");
         playerUIs[0].gameObject.SetActive(true);
         curChar.setCharUI(playerUIs[0]);
         playerUIs[0].updateDeckAndDiscardSize(getCurCharTurn().getFullDeckSize(),
@@ -781,7 +713,6 @@ public class Overseer : MonoBehaviour
         playerUIs[0].unHoverDeck();
         yield return new WaitForEndOfFrame();
         yield return new WaitWhile(isOngoingActions);
-        Debug.Log("New turn : 4");
         curChar.beginTurn();
 
         if (curChar.getIsPlayerCharacter())
@@ -795,10 +726,6 @@ public class Overseer : MonoBehaviour
             Debug.Log("ONGOING ACTIONS: " + isOngoingActions());
             yield return new WaitWhile(isOngoingActions);
             curChar.GetComponent<enemyBrain>().resetTurn();
-/*            cameraFollowScript.instance.updateTarget(getCurCharTurn().gameObject);
-            FieldHighlight.instance.updateCurCharacter(getCurCharTurn().gameObject.GetComponent<Character>());
-            //enemies[curCharTurnItr].gameObject.GetComponent<enemyBrain>().startCurEnemyTurn();
-            StartCoroutine(getCurCharTurn().gameObject.GetComponent<enemyBrain>().enemyTakeAction());*/
             WorldMode.instance.changeWorldMode(wMode.ENEMYTURN);
         }
         showFieldUI();
@@ -810,92 +737,8 @@ public class Overseer : MonoBehaviour
         anim.Play("hideUI");
         turnOrder.RemoveAt(turnOrder.Count - 1);
         TurnOrderIcons.instance.nextCharacterTurn();
-        //StartCoroutine(startNextTurn());
     }
-    /*
-    public IEnumerator beginHeroPhase()
-    {
-        curCharTurnItr = 0;
-        FieldHighlight.instance.updateCurCharacter(playerCharacters[curCharTurnItr]);
-
-        uiOffset = 0;
-        int itr = 0;
-        foreach (Character player in playerCharacters)
-        {
-            player.setCharUI(playerUIs[itr]);
-            itr++;
-        }
-
-        //SwapHeroIndicator.SetActive(true);
-
-        WorldMode.instance.changeWorldMode(wMode.WAIT);
-
-        //Start battle banners
-        BannerAnimScript.instance.turnOnBanner(1);
-        //yield return new WaitWhile(isOngoingActions);
-
-        cameraFollowScript.instance.changeCameraSpeed(5f);
-        StartCoroutine(updateCameraTarget(playerCharacters[curCharTurnItr].gameObject));
-        yield return new WaitForEndOfFrame();
-        yield return new WaitWhile(isOngoingActions);
-        cameraFollowScript.instance.resetCameraSpeed();
-
-        foreach (Character character in playerCharacters)
-            character.beginTurn(false);//not their first turn
-        yield return new WaitWhile(isOngoingActions);
-
-        WorldMode.instance.changeWorldMode(wMode.NAVIGATEMENUS);
-
-        showFieldUI();
-        Menu.instance.resetArc(playerCharacters[curCharTurnItr], playerUIs[0]);
-    }
-
-    //Transitions to the Enemy phase    
-    public IEnumerator beginEnemyPhase()
-    {
-        curCharTurnItr = 0;
-        FieldHighlight.instance.updateCurCharacter(enemies[curCharTurnItr].gameObject.GetComponent<Character>());
-        Menu.instance.closeArc();
-
-        WorldMode.instance.changeWorldMode(wMode.WAIT);
-        
-        //Start battle banners
-        BannerAnimScript.instance.turnOnBanner(2);
-        //yield return new WaitWhile(isOngoingActions);
-        
-        cameraFollowScript.instance.changeCameraSpeed(5f);
-        StartCoroutine(updateCameraTarget(enemies[curCharTurnItr].gameObject));
-        showAllCurActions();
-        yield return new WaitForEndOfFrame();
-        yield return new WaitWhile(isOngoingActions);
-        cameraFollowScript.instance.resetCameraSpeed();
-
-        foreach (GameObject enemy in enemies)
-        {
-            enemy.gameObject.GetComponent<Character>().beginTurn(false);
-            enemy.gameObject.GetComponent<enemyBrain>().resetTurn();
-        }
-
-        WorldMode.instance.changeWorldMode(wMode.ENEMYTURN);  
-        showFieldUI();
-    }*/
     
-    
-    /*public IEnumerator softEndCombat()
-    {
-        WorldMode.instance.changeWorldMode(wMode.WAIT);
-        destroyFieldUIs();
-        anim.Play("hideUI");
-        TurnOrderIcons.instance.destroyAllIcons();
-        FieldHighlight.instance.resetHighlighting();
-        Menu.instance.closeArc();
-
-        foreach(Character character in playerCharacters)
-        {
-            character.endCombat();
-            character.changeFacingDirection
-        }
-    }*/
     //Called at the conclusion of a battle, when the battle goals have been completed. Returns to the Freeroam Mode.
     public IEnumerator endCombat()
     {
@@ -933,17 +776,16 @@ public class Overseer : MonoBehaviour
 
         playerCharacters[0].GetAnimator().Play("idle");
         StartCoroutine(updateCameraTarget(playerCharacters[0].gameObject));
+
         //Do other end of combat things here: experience, items, banners, whatever
         for (int i = 1; i < playerCharacters.Count; i++)
         {
             StartCoroutine(playerCharacters[i].freeMoveTo(playerCharacters[0].gridPos, playerCharacters[i].gridPos));
-            //playerCharacters[i].cueAnim(cardType.Attack, "fadeOut");
         }
         yield return new WaitWhile(isOngoingActions);
         
         for (int i = 1; i < playerCharacters.Count; i++)
         {
-            //playerCharacters[i].resetOpacity();
             playerCharacters[i].turnOnOffSpriteParent(false);
         }
         Debug.Log("Finished Combat");
@@ -974,7 +816,6 @@ public class Overseer : MonoBehaviour
     public void endHeroPhase()
     {
         hideFieldUI();
-        //SwapHeroIndicator.SetActive(false);
     }
 
     //Called when all enemies have performed all the actions they are going to perform in a turn. Returns to Hero Phase
@@ -1171,8 +1012,6 @@ public class Overseer : MonoBehaviour
     public void arcEndTurnButton()
     {
         Debug.Log("OVERSEER: arcEndTurnButton: Ending Hero Phase, beginning Enemy phase.");
-        //endHeroPhase();
-        //StartCoroutine(beginEnemyPhase());
         endTurn();
         StartCoroutine(startNextTurn());
     }
@@ -1199,7 +1038,6 @@ public class Overseer : MonoBehaviour
         WorldMode.instance.changeWorldMode(wMode.WAIT);//listens for action tracker 
         cursorControls.instance.setCursorActive(false);
         apGague.gameObject.SetActive(false);
-        //Menu.instance.closeArc();
 
         StartCoroutine(updateCameraTarget(getCurCharTurn().gameObject));
         yield return new WaitForEndOfFrame();
@@ -1215,61 +1053,6 @@ public class Overseer : MonoBehaviour
         curAPPwr = 0;
         curAPCost = 0;
     }
-
-    /*public IEnumerator swapHero(bool isLeft)
-    {
-        Debug.Log("OVERSEER: SwapHero");
-        if (isLeft)
-        {
-            curCharTurnItr++;
-            if (curCharTurnItr > playerCharacters.Count - 1)
-                curCharTurnItr = 0;
-
-            uiOffset--;
-            if (uiOffset < 0)
-                uiOffset = playerUIs.Count - 1;
-
-            //swapHeroActiveAnim
-            SwapHeroIndicator.GetComponentsInChildren<Animator>()[0].SetTrigger("swapHero");
-        }
-        else
-        {
-            curCharTurnItr--;
-            if (curCharTurnItr < 0)
-                curCharTurnItr = playerCharacters.Count - 1;
-
-            uiOffset++;
-            if (uiOffset > playerUIs.Count - 1)
-                uiOffset = 0;
-
-            //swapHeroActiveAnim
-            SwapHeroIndicator.GetComponentsInChildren<Animator>()[1].SetTrigger("swapHero");
-        }
-
-        int itr = 0;
-        int whichUI;
-        foreach (Character player in playerCharacters)
-        {
-            whichUI = (itr + uiOffset) % playerUIs.Count;
-
-            player.setCharUI(playerUIs[whichUI]);
-            itr++;
-        }
-
-        playerUIs[0].unHoverDeck();
-
-        FieldHighlight.instance.updateCurCharacter(playerCharacters[curCharTurnItr]);
-        WorldMode.instance.changeWorldMode(wMode.WAIT);
-        Menu.instance.closeArc();
-
-        StartCoroutine(updateCameraTarget(playerCharacters[curCharTurnItr].gameObject));
-        yield return new WaitForEndOfFrame();
-        yield return new WaitWhile(isOngoingActions);
-
-        WorldMode.instance.changeWorldMode(wMode.NAVIGATEMENUS);
-        Menu.instance.openArc();
-        Menu.instance.resetArc(playerCharacters[curCharTurnItr], playerUIs[0]);
-    }*/
 
     //updates the camera with a new target, and waits until it reaches that target to allow further actions.
     public IEnumerator updateCameraTarget(GameObject target)
@@ -1288,7 +1071,6 @@ public class Overseer : MonoBehaviour
             
         //cardAction.onSelected handles which highlighting to do.
         cardAction.onSelected();
-        //FieldHighlight.instance.getAttackArea(cardAction.getRange());
             
         WorldMode.instance.changeWorldMode(wMode.SELECTSKILLPOS);
         //SwapHeroIndicator.SetActive(false);
@@ -1408,6 +1190,7 @@ public class Overseer : MonoBehaviour
                 TurnOrderIcons.instance.newTurnOrder(turnOrder);
             }
         }
+
         Character curEnemy;
         for (int i = 0; i < enemies.Count; i++)
         {

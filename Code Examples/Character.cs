@@ -86,10 +86,6 @@ public class Character : MonoBehaviour
         }
     }
 
-    public void resetOpacity()
-    {
-    }
-
     public void Start()
     {
         moveAction = cardBase.CreateInstance<baseMove>();
@@ -167,36 +163,6 @@ public class Character : MonoBehaviour
 
     void FixedUpdate()
     {
-        /*
-        if (isFadingIn)
-        {
-            Color curColor = frontSpriteParent.GetComponent<SpriteRenderer>().color;
-            float mdf;
-            if (fadeDestColor == new Color(0, 0, 0, 0))
-                mdf = -.00001f;
-            else
-                mdf = .00001f;
-            frontSpriteParent.GetComponent<SpriteRenderer>().color = curColor + new Color(mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime);
-            backSpriteParent.GetComponent<SpriteRenderer>().color = curColor + new Color(mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime,
-                                                                                          mdf * Time.deltaTime);
-
-            if (frontSpriteParent.GetComponent<SpriteRenderer>().color == fadeDestColor)
-            {
-                isFadingIn = false;
-                if (fadeDestColor == new Color(0,0,0,0))
-                {
-                    frontSpriteParent.gameObject.SetActive(false);
-                    backSpriteParent.gameObject.SetActive(false);
-                }
-            }
-
-        }*/
-
         if (newPos != gridPos)
         {
             if (isPushed)//doesn't rotate or use a running animation
@@ -373,9 +339,9 @@ public class Character : MonoBehaviour
                 return curHandCards[i];
             }
         }
-        
         return null;
     }
+
     public void enemySelectButton(cardBase card)
     {
         for(int i = 0; i < curHandCards.Count; i++)
@@ -387,6 +353,7 @@ public class Character : MonoBehaviour
             }
         }
     }
+
     public baseMove getBaseMovement()
     {
         return moveAction;
@@ -444,6 +411,7 @@ public class Character : MonoBehaviour
     {
         charAnim = GetComponentInChildren<Animator>();
     }
+
     public void useAP(int howMuch, arcSelection actionType)
     {
         APusedThisTurn += howMuch;
@@ -535,17 +503,6 @@ public class Character : MonoBehaviour
         APusedThisTurn = 0;
         charStats.addAPperTurn();
 
-        /* //reset the deck
-         unusedCards.Clear();
-         foreach (cardBase card in cards)
-             unusedCards.Add(card);
-         curHandCards.Clear();
-         if (myUI != null)
-             myUI.resetCards(curHandCards); //ensures no leftover cardobjects/cardBase from previous battles
-         //else
-             //  Debug.Log("Character: ENEMYUI reset cards");
-         discardPile.Clear();*/
-
         if (unusedCards.Count == 0)
             ShuffleDeck();
 
@@ -574,7 +531,6 @@ public class Character : MonoBehaviour
     //ends combat
     public void endCombat()
     {
-
         charStats.curHealth = charStats.maxHealth;
         charAnim.enabled = true;
         isAlreadyDead = false;
@@ -610,14 +566,6 @@ public class Character : MonoBehaviour
                     unusedCards.Remove(unusedCards[whichCard]);
                 }
             }
-            /*else//enemy char
-            {
-                if (curHandCards.Count < 5)
-                {
-                    curHandCards.Add(unusedCards[whichCard]);
-                    unusedCards.Remove(unusedCards[whichCard]);
-                }
-            }*/
         }
 
         fieldUI.updateFieldStatusInfo();
@@ -713,6 +661,7 @@ public class Character : MonoBehaviour
         finishAction();
         Overseer.instance.actionUnSubscribe(this.name);
     }
+    
     //pushing a character along x or y axis towards destination.
     //stops pushing if character hits an obstacle or reaches destination
     public IEnumerator push(Vector3Int pushDest)
@@ -892,9 +841,6 @@ public class Character : MonoBehaviour
                                                 "Dodge", Color.white);
 
             cueAnim(type, "dodge");
-            //Character dodges
-            //charAnim.SetTrigger("dodge");
-            //Show floating "dodge" instead of damage numbers
             Debug.Log("Character " + this.name + " Dodged an attack.");
         }
     }
@@ -908,7 +854,6 @@ public class Character : MonoBehaviour
             return true;
         else
             return false;
-        
     }
 
     int modifyIncomingDmg(int cardPwr, cardType type, Affinity element)
@@ -917,6 +862,7 @@ public class Character : MonoBehaviour
         int statEffectModifier = 0;
 
         int cardPwrAfterShield = cardPwr;
+
         //cardPWR reduced by any existing shield amount before being reduced by def/res
         cardPwrAfterShield = useShieldEffect(cardPwr);
 
@@ -1068,26 +1014,10 @@ public class Character : MonoBehaviour
 
         foreach (statusEffect statEffect in curStatusEffects)
         {
-            affectedStatSum += statEffect.getIfStatAffected(stat);    
+            affectedStatSum += statEffect.getIfStatAffected(stat);
         }
-        Debug.Log("CHARACTER: " + this.name + " getting stat: " + stat + " Size: " + affectedStatSum); 
+        Debug.Log("CHARACTER: " + this.name + " getting stat: " + stat + " Size: " + affectedStatSum);
         return affectedStatSum;
-    }
-
-
-    //come back to this later
-    public int useShieldEffect(int cardPwr)
-    {
-        int shieldReducedDmg = cardPwr;
-
-        foreach(statusEffect statEffect in curStatusEffects)
-        {
-            if (statEffect.affectedStat == affectedStat.Shield)
-                //reduce shield amount, alll that jazz
-                continue;
-        }
-
-        return cardPwr;
     }
     #endregion
 
